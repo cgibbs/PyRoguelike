@@ -1,0 +1,124 @@
+TODO:
+*Actually organize all of these files
+
+*Dead Forest level? Set the walls to 'Y', and they're suddenly long-dead trees
+
+*Chests and boxes, a la Nethack
+--Objects have inventory, so capitalize on that
+
+*"Sticky" terrain (can be used as/for a bear trap) - Prevents movement, but not attack
+
+*"Totem" AI and objects
+--for spell effects and permanent fixtures (electrical object in a puddle, for example)
+
+*Spellbook for casters
+
+*Pets for a Beastmaster class, with custom pets
+
+*Disposable pets for necromancer, with summon spell to get more
+
+*Improve tile class, to allow for different floor types, and floor effects
+--carving "Elbereth", for example
+--pits, water, acid, fuel, fire, or lava, for another
+--fog is a good one, too
+--give each tile its coords, for figuring out neighboring tiles for A* and such
+--on tile mouseover, show attributes 
+----if tile.mod_set: show attributes
+
+*Add item qualities, both normal and enchanted
+--Write effects as "<unenchanted> ______ of <enchantment>"
+--Named for "best" mods, but can have more
+--Fireproof, acidproof, fire damage, acid damage, sharp, dull, deadly... 
+--prefix and suffix booleans for whether there's a name on the weapon
+
+*Money and a Shop
+
+*Traps, beyond just mimics
+--Ability to disarm, or find a "skeleton key", or whatever (skel key not auto-use)
+--Spot system, for detecting traps (traps should also be drawn at back, but give 
+    a message when spotted)
+
+*Doors, and trapped versions
+--Keys: just have a numerical value to match a key to a door, if doing special keys
+
+*Overhaul dungeon generation for more types of rooms
+--Include miscellaneous dungeon trappings, i.e. furniture
+
+*Add monster variety
+
+*A unique currency would be cool, but don't just rip off PoE
+
+*Add A* pathfinding for SmartMonster AI (as its own method of the AI, for extensibility)
+
+*Better attacking variety in AI
+--Use a dictionary of possible attacks (for example: Humanoid uses weapon, or unarmed if none; Dragon uses breath weapon and/or claws), with a corresponding AI to handle the specific types of attacks.
+
+*Perks
+
+*New AI movement
+-- the AI can't get around corners
+
+*More varied AI
+-- dragons, definitely; classes for humanoids (with behaviors) would be brilliant
+
+*Ranged combat
+-- for player AND monsters
+
+*Cone spells
+
+*Multiple save/load states
+
+*Blood splatters
+
+
+COMPLETED:
+
+*Tomes - New class for multiple-use spell scrolls, basically
+
+*Help screen
+
+*Scrolling messages (100 lines stored)
+
+*Make menus fully opaque
+
+*Character creation
+
+*Rudimentary unique monster system
+
+*Tile Effect Spells
+
+*Fix the name entry so that it shows over all of the previous menu
+
+*Conduct electric attacks through water/puddle tiles
+
+*Hunger
+-- Actual hunger mechanics
+-- Carve corpse mechanism
+-- Hunger bar
+-- Food, generation and mechanics (rot, eating, etc.)
+
+*Mimics
+
+*Fixed Stat Bar mechanism to round properly
+
+*Encapsulated object creation into separate methods (for Mimics, and for code neatness)
+
+*Fixed 'a' vs 'an' in Item.picked_up()
+
+*Look system
+--More like an "in-depth description" viewing system
+
+*Added inputbox() for text entry
+--Make inputbox() actually handle text input worth a fuck
+
+*'Push' spell
+
+*'Ice Wall' spell
+
+*Nerfed sword and shield bonuses by 1 each
+
+*Dice combat, rather than flat damage
+-- Pass a dice value as a tuple to Objects, in the format (amt, die) for both
+monster Hit Die and unarmed attack. 
+
+*Sorted Inventory
