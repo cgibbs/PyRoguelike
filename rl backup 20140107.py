@@ -20,11 +20,8 @@ MSG_X = BAR_WIDTH + 2
 MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
 MSG_HEIGHT = PANEL_HEIGHT - 1
 
-MAP_WIDTH = 160
-MAP_HEIGHT = 86
-
-CAMERA_WIDTH = 80
-CAMERA_HEIGHT = 43
+MAP_WIDTH = 80
+MAP_HEIGHT = 43
 
 ROOM_MAX_SIZE = 10
 ROOM_MIN_SIZE = 6
@@ -201,14 +198,14 @@ class Object:
         dy = other.y - self.y
         return math.sqrt(dx ** 2 + dy ** 2)
 
-    """def draw(self):
+    def draw(self):
         if libtcod.map_is_in_fov(fov_map, self.x, self.y) or \
            (self.always_visible and map[self.x][self.y].explored):
             libtcod.console_set_default_foreground(con, self.color)
-            libtcod.console_put_char(con, self.x, self.y, self.char, libtcod.BKGND_NONE)"""
+            libtcod.console_put_char(con, self.x, self.y, self.char, libtcod.BKGND_NONE)
 
     def clear(self):
-        libtcod.console_put_char(con, self.x-camera.x, self.y-camera.y, ' ', libtcod.BKGND_NONE)
+        libtcod.console_put_char(con, self.x, self.y, ' ', libtcod.BKGND_NONE)
 
     def send_to_back(self):
         # sets drawing order such that this object is drawn underneath other stuff
@@ -230,18 +227,6 @@ class Object:
         else:
             return self.name
 
-class Player(Object):
-    def move(self, dx, dy):
-        global camera
-        if not is_blocked(self.x + dx, self.y + dy):
-            self.x += dx
-            self.y += dy
-        elif not is_blocked(self.x + dx, self.y):
-            self.x += dx
-        elif not is_blocked(self.x, self.y + dy):
-            self.y += dy
-        camera.move_to(player.x, player.y)
-
 class Tile:
     def __init__(self, blocked, x, y, block_sight=None):
         # takes a set for modSet, and it determines the properties of a tile
@@ -258,6 +243,10 @@ class Tile:
         
     def add_mod(self, mod):
         self.mod_set.add(mod)
+
+    def check_objects(self):
+        # checks to see if items on this tile are affected by Tile mods
+        pass
 
 class Rect:
     def __init__(self, x, y, w, h):
@@ -276,29 +265,7 @@ class Rect:
         return (self.x1 <= other.x2 and self.x2 >= other.x1 and
                 self.y1 <= other.y2 and self.y2 >= other.y1)
 
-class Camera:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.width = CAMERA_WIDTH
-        self.height = CAMERA_HEIGHT
 
-    def fix_camera(self):
-        if self.x < 0:
-            self.x = 0
-        elif self.x > (MAP_WIDTH - CAMERA_WIDTH):
-            self.x = MAP_WIDTH - CAMERA_WIDTH
-        if self.y < 0:
-            self.y = 0
-        elif self.y > (MAP_HEIGHT - CAMERA_HEIGHT):
-            self.y = MAP_HEIGHT - CAMERA_HEIGHT
-
-    def move_to(self, x, y):
-        self.x = x - CAMERA_WIDTH/2
-        self.y = y - CAMERA_HEIGHT/2
-        self.fix_camera()
-        
-    
 # ---------- CLASSES - COMBAT ----------
 
 
@@ -727,11 +694,11 @@ def keys_screen():
 def get_names_under_mouse():
     global mouse
     # returns a string with the names of all objects under the mouse
-    (x, y) = (mouse.cx + camera.x, mouse.cy + camera.y)
+    (x, y) = (mouse.cx, mouse.cy)
     if y < SCREEN_HEIGHT and x < SCREEN_WIDTH and libtcod.map_is_in_fov(fov_map, x, y):
         names = [mod.capitalize() for mod in map[x][y].mod_set]
     else:
-        names = []
+        names = ""
         
     for obj in objects:
         if obj.x == x and obj.y == y and libtcod.map_is_in_fov(fov_map, obj.x, obj.y):
@@ -743,11 +710,11 @@ def get_names_under_mouse():
 def get_names_and_health_under_mouse():
     global mouse
     # returns a string with the names of all objects under the mouse
-    (x, y) = (mouse.cx + camera.x, mouse.cy + camera.y)
+    (x, y) = (mouse.cx, mouse.cy)
     if y < SCREEN_HEIGHT and x < SCREEN_WIDTH and libtcod.map_is_in_fov(fov_map, x, y):
         names = [mod.capitalize() for mod in map[x][y].mod_set]
     else:
-        names = []
+        names = ""
     for obj in objects:
         if obj.x == x and obj.y == y and libtcod.map_is_in_fov(fov_map, obj.x, obj.y):
             if obj.fighter is not None:
@@ -761,11 +728,11 @@ def get_names_and_health_under_mouse():
 def get_full_names_under_mouse():
     global mouse
     # returns a string with the names of all objects under the mouse
-    (x, y) = (mouse.cx + camera.x, mouse.cy + camera.y)
+    (x, y) = (mouse.cx, mouse.cy)
     if y < SCREEN_HEIGHT and x < SCREEN_WIDTH and libtcod.map_is_in_fov(fov_map, x, y):
         names = [mod.capitalize() for mod in map[x][y].mod_set]
     else:
-        names = []
+        names = ""
     for obj in objects:
         if obj.x == x and obj.y == y and libtcod.map_is_in_fov(fov_map, obj.x, obj.y):
             names.append(obj.full_name)
@@ -802,51 +769,45 @@ def render_all():
             libtcod.map_compute_fov(fov_map, player.x, player.y, FOG_TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
         else:
             libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
-        for y in range(camera.y, camera.y + CAMERA_HEIGHT):
-            for x in range(camera.x, camera.x + CAMERA_WIDTH):
+        for y in range(MAP_HEIGHT):
+            for x in range(MAP_WIDTH):
                 visible = libtcod.map_is_in_fov(fov_map, x, y)
                 wall = map[x][y].block_sight
                 mods = map[x][y].mod_set
                 if not visible:
                     if map[x][y].explored:
                         if wall:
-                            libtcod.console_set_char_background(con, x-camera.x, y-camera.y, color_dark_wall, libtcod.BKGND_SET)
+                            libtcod.console_set_char_background(con, x, y, color_dark_wall, libtcod.BKGND_SET)
                         else:
-                            libtcod.console_set_char_background(con, x-camera.x, y-camera.y, color_dark_ground, libtcod.BKGND_SET)
-                    else:
-                        libtcod.console_set_char_background(con, x-camera.x, y-camera.y, libtcod.black, libtcod.BKGND_SET)
+                            libtcod.console_set_char_background(con, x, y, color_dark_ground, libtcod.BKGND_SET)
                 else:
                     if wall:
-                        #libtcod.console_set_default_foreground(con, libtcod.white)
-                        libtcod.console_set_char_background(con, x-camera.x, y-camera.y, color_light_wall, libtcod.BKGND_SET)
+                        libtcod.console_set_default_foreground(con, libtcod.white)
+                        libtcod.console_set_char_background(con, x, y, color_light_wall, libtcod.BKGND_SET)
                         
                     else:
                         if 'fog' in mods:
-                            libtcod.console_set_char_background(con, x-camera.x, y-camera.y, color_fog, libtcod.BKGND_SET)
+                            libtcod.console_set_char_background(con, x, y, color_fog, libtcod.BKGND_SET)
                         elif 'sticky' in mods:
-                            libtcod.console_set_char_background(con, x-camera.x, y-camera.y, color_sticky, libtcod.BKGND_SET)
+                            libtcod.console_set_char_background(con, x, y, color_sticky, libtcod.BKGND_SET)
                         elif 'lava' in mods:
-                            libtcod.console_set_char_background(con, x-camera.x, y-camera.y, color_lava, libtcod.BKGND_SET)
+                            libtcod.console_set_char_background(con, x, y, color_lava, libtcod.BKGND_SET)
                         elif 'water' in mods:
-                            libtcod.console_set_char_background(con, x-camera.x, y-camera.y, color_water, libtcod.BKGND_SET)
+                            libtcod.console_set_char_background(con, x, y, color_water, libtcod.BKGND_SET)
                         elif 'acid' in mods:
-                            libtcod.console_set_char_background(con, x-camera.x, y-camera.y, color_acid, libtcod.BKGND_SET)
+                            libtcod.console_set_char_background(con, x, y, color_acid, libtcod.BKGND_SET)
                         elif 'puddle' in mods:
-                            libtcod.console_set_char_background(con, x-camera.x, y-camera.y, color_puddle, libtcod.BKGND_SET)
+                            libtcod.console_set_char_background(con, x, y, color_puddle, libtcod.BKGND_SET)
                         elif 'blood' in mods:
-                            libtcod.console_set_char_background(con, x-camera.x, y-camera.y, color_blood, libtcod.BKGND_SET)
+                            libtcod.console_set_char_background(con, x, y, color_blood, libtcod.BKGND_SET)
                         else:
-                            libtcod.console_set_char_background(con, x-camera.x, y-camera.y, color_light_ground, libtcod.BKGND_SET)
+                            libtcod.console_set_char_background(con, x, y, color_light_ground, libtcod.BKGND_SET)
                     map[x][y].explored = True
 
     for object in objects: # prevents drawing over the player
         if object != player:
-            if libtcod.map_is_in_fov(fov_map, object.x, object.y) or \
-               (object.always_visible and map[object.x][object.y].explored):
-                libtcod.console_set_default_foreground(con, object.color)
-                libtcod.console_put_char(con, object.x-camera.x, object.y-camera.y, object.char, libtcod.BKGND_NONE)
-    libtcod.console_set_default_foreground(con, player.color)
-    libtcod.console_put_char(con, player.x-camera.x, player.y-camera.y, player.char, libtcod.BKGND_NONE)
+            object.draw()
+    player.draw()
 
     libtcod.console_blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
 
@@ -1053,7 +1014,7 @@ def message(new_msg, color=libtcod.white):
         msg_index = len(game_msgs) - MSG_HEIGHT
 
 def make_map():
-    global map, objects, stairs, dungeon_level, camera
+    global map, objects, stairs, dungeon_level
 
     if dungeon_level % BOSS_LEVEL_FREQ != 0:
         objects = [player]
@@ -1088,8 +1049,6 @@ def make_map():
                 if num_rooms == 0:
                     player.x = new_x
                     player.y = new_y
-                    camera.move_to(player.x, player.y)
-                    
                 else:
                     (prev_x, prev_y) = rooms[num_rooms-1].center()
 
@@ -1137,7 +1096,6 @@ def make_boss_map():
     (entrance_x, entrance_y) = entrance_room.center()
     player.x = entrance_x
     player.y = entrance_y
-    camera.move_to(player.x - CAMERA_WIDTH/2, player.y - CAMERA_HEIGHT/2)
     (boss_x, boss_y) = boss_room.center()
     place_objects(boss_room)
 
@@ -1461,25 +1419,13 @@ def target_tile(max_range=None):
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE, key, mouse)
         render_all()
 
-        (x, y) = (mouse.cx + camera.x, mouse.cy + camera.y)
+        (x, y) = (mouse.cx, mouse.cy)
 
         if (mouse.lbutton_pressed and libtcod.map_is_in_fov(fov_map, x, y) and
             (max_range is None or player.distance(x,y) <= max_range)):
             return(x, y)
         if mouse.rbutton_pressed or key.vk == libtcod.KEY_ESCAPE:
             return (None,None)
-        """libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE, key, mouse)
-        
-        render_all()
-        libtcod.console_flush()
-
-        if mouse.lbutton_pressed:
-            (x, y) = (mouse.cx, mouse.cy)
-            if libtcod.map_is_in_fov(fov_map, x, y):
-                if (max_range is None) or player.distance(x,y) <= max_range:
-                    return(x, y)
-        if mouse.rbutton_pressed or key.vk == libtcod.KEY_ESCAPE:
-            return (None,None)"""
 
 def target_monster(max_range=None):
     # returns a clicked monster inside FOV up to a range, or None if right-clicked
@@ -1686,7 +1632,7 @@ def ele_damage(obj, mods, damage=None):
     if not isinstance(mods, set):
         mods = set([mods])
     if damage is None:
-            damage = roll_dice((1,3))
+            damage = roll_dice(1,3)
     if obj.fighter is not None:   
         if ('lava' or 'fire') in mods:
             message(obj.full_name + ' is burned for ' + str(damage) + ' hit points!', color_lava)
@@ -1958,7 +1904,7 @@ def boss_death(monster):
 
 def new_game():
     global player, inventory, game_msgs, game_state, dungeon_level, steps, hunger_msg, ice_counter
-    global msg_index, camera
+    global msg_index
     msg_index = 0
 
     name = inputbox('Enter your name, brave warrior\n')
@@ -1987,7 +1933,7 @@ def new_game():
         if choice == 0:
             fighter_component = Fighter(hp=100, defense=1, power=1, xp=0, attack_dice=(1,4),
                                         death_function=player_death)
-            player = Player(0, 0, '@', name, libtcod.white, blocks=True, fighter=fighter_component)
+            player = Object(0, 0, '@', name, libtcod.white, blocks=True, fighter=fighter_component)
 
             equipment_component = Weapon(slot='hand', power_bonus=1, attack_dice=(1,6))
             obj = Object(0, 0, '-', 'sword', libtcod.sky, equipment=equipment_component)
@@ -2060,7 +2006,6 @@ def new_game():
     ice_counter = None
 
     dungeon_level = 1
-    camera = Camera(0, 0)
     make_map()
     initialize_fov()
 
@@ -2168,8 +2113,6 @@ def play_game():
         if game_state == 'playing' and player_action != 'didnt-take-turn': # AI loop
             check_hunger()
             check_ice_counter()
-            check_level_up()
-            check_floor()
             for object in objects:
                 if object.ai:
                     object.ai.take_turn()
@@ -2182,6 +2125,7 @@ def play_game():
         render_all()
 
         libtcod.console_flush()
+        check_level_up()
 
         for object in objects:
             object.clear()
