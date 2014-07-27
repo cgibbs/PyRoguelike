@@ -208,8 +208,7 @@ class Object:
             libtcod.console_put_char(con, self.x, self.y, self.char, libtcod.BKGND_NONE)"""
 
     def clear(self):
-        libtcod.console_put_char(con, self.x-camera.x, self.y-camera.y, ' ', 
-            libtcod.BKGND_NONE)
+        libtcod.console_put_char(con, self.x-camera.x, self.y-camera.y, ' ', libtcod.BKGND_NONE)
 
     def send_to_back(self):
         # sets drawing order such that this object is drawn underneath other stuff
@@ -222,8 +221,7 @@ class Object:
         tile = map[self.x][self.y]
         for mod in tile.mod_set:
             if mod not in self.mod_set:
-                pass # TODO: handle damages, maybe as a list 
-                     #(for multiple damage types on floors)
+                pass # TODO: handle damages, maybe as a list (for multiple damage types on floors)
 
     @property
     def full_name(self):
@@ -296,7 +294,6 @@ class Camera:
             self.y = MAP_HEIGHT - CAMERA_HEIGHT
 
     def move_to(self, x, y):
-        # moves camera to center on (x, y)
         self.x = x - CAMERA_WIDTH/2
         self.y = y - CAMERA_HEIGHT/2
         self.fix_camera()
@@ -360,10 +357,9 @@ class Fighter:
                 player.fighter.xp += self.xp
 
     def attack(self, target):
-        #global player
+        global player
         damage = (self.power/2)
-        #if (self.owner.inv is not None) and self.owner is not player:
-        if (self.owner.inv is not None):
+        if (self.owner.inv is not None) and self.owner is not player:
             for obj in self.owner.inv:
                 if isinstance(obj.equipment, Weapon):
                     if obj.equipment.is_equipped:
@@ -603,7 +599,7 @@ class Weapon(Equipment):
 
 
 def handle_keys():
-    global fov_recompute, mouse, msg_index, game_msgs
+    global fov_recompute, keys, mouse, msg_index, game_msgs
     
     if key.vk == libtcod.KEY_ENTER and key.lalt:
         libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())    
@@ -1281,18 +1277,16 @@ def create_monster(x, y):
         m = libtcod.random_get_int(0, 1, 3)
         n = random.choice(nouns)
         if m == 1:
-            monster.fighter.attack_dice = (monster.fighter.attack_dice[0]+1, monster.fighter.attack_dice[1]) 
-            #fast monsters get another die
+            monster.fighter.attack_dice = (monster.fighter.attack_dice[0]+1, monster.fighter.attack_dice[1]) #fast monsters get another die
             pre = random.choice(prefixes['fast'])
         elif m == 2:
-            monster.fighter.attack_dice = (monster.fighter.attack_dice[0], monster.fighter.attack_dice[1]+2) 
-            #strong monsters get a bigger die
+            monster.fighter.attack_dice = (monster.fighter.attack_dice[0], monster.fighter.attack_dice[1]+2) #strong monsters get a bigger die
             pre = random.choice(prefixes['strong'])
         elif m == 3:
-            monster.fighter.hp += 20 
-            #hp monsters get more hp
+            monster.fighter.hp += 20 #hp monsters get more hp
             pre = random.choice(prefixes['hp'])
         monster.name = pre + n + ' the ' + monster.name
+        print monster.name
         monster.color = libtcod.grey
         monster.fighter.xp += monster.fighter.xp/2
     return monster
@@ -1328,13 +1322,13 @@ def create_item(x, y):
         item = Object(x, y, '!', 'greater healing potion', libtcod.violet, item=item_component)
     elif choice == 'tome_heal_lesser':
         item_component = Tome(cast_heal_lesser)
-        item = Object(x, y, '=', 'tome of lesser healing', libtcod.blue, item=item_component)
+        item = Object(x, y, '+', 'tome of lesser healing', libtcod.blue, item=item_component)
     elif choice == 'tome_heal':
         item_component = Tome(cast_heal)
-        item = Object(x, y, '=', 'tome of healing', libtcod.blue, item=item_component)
+        item = Object(x, y, '+', 'tome of healing', libtcod.blue, item=item_component)
     elif choice == 'tome_heal_greater':
         item_component = Tome(cast_heal_greater)
-        item = Object(x, y, '=', 'tome of greater healing', libtcod.blue, item=item_component)
+        item = Object(x, y, '+', 'tome of greater healing', libtcod.blue, item=item_component)
     elif choice == 'lightning':
         item_component = Item(use_function=cast_lightning)
         item = Object(x, y, '#', 'scroll of lightning bolt', libtcod.light_yellow, item=item_component)
@@ -1426,14 +1420,6 @@ def random_choice(chances_dict):
 
     return strings[random_choice_index(chances)]
 
-def from_dungeon_level(table):
-    # return a value that depends on level
-    # table specifies what happens after each level, default is 0
-    for (value, level) in reversed(table):
-        if dungeon_level >= level:
-            return value
-    return 0
-
 def is_blocked(x, y):
     if map[x][y].blocked:
         return True
@@ -1443,6 +1429,14 @@ def is_blocked(x, y):
             return True
 
     return False
+
+def from_dungeon_level(table):
+    # return a value that depends on level
+    # table specifies what happens after each level, default is 0
+    for (value, level) in reversed(table):
+        if dungeon_level >= level:
+            return value
+    return 0
 
 def closest_monster(max_range):
     # find closest enemy, up to range, in the player's FOV
@@ -1474,6 +1468,18 @@ def target_tile(max_range=None):
             return(x, y)
         if mouse.rbutton_pressed or key.vk == libtcod.KEY_ESCAPE:
             return (None,None)
+        """libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE, key, mouse)
+        
+        render_all()
+        libtcod.console_flush()
+
+        if mouse.lbutton_pressed:
+            (x, y) = (mouse.cx, mouse.cy)
+            if libtcod.map_is_in_fov(fov_map, x, y):
+                if (max_range is None) or player.distance(x,y) <= max_range:
+                    return(x, y)
+        if mouse.rbutton_pressed or key.vk == libtcod.KEY_ESCAPE:
+            return (None,None)"""
 
 def target_monster(max_range=None):
     # returns a clicked monster inside FOV up to a range, or None if right-clicked
@@ -1994,7 +2000,7 @@ def new_game():
         elif choice == 1:
             fighter_component = Fighter(hp=100, defense=1, power=1, xp=0, attack_dice=(1,4),
                                         death_function=player_death)
-            player = Player(0, 0, '@', name, libtcod.white, blocks=True, fighter=fighter_component)
+            player = Object(0, 0, '@', name, libtcod.white, blocks=True, fighter=fighter_component)
             
             equipment_component = Weapon(slot='hand', power_bonus=1, attack_dice=(1,6))
             obj = Object(0, 0, '-', 'butter knife', libtcod.sky, equipment=equipment_component)
@@ -2007,7 +2013,7 @@ def new_game():
         elif choice == 2:
             fighter_component = Fighter(hp=120, defense=1, power=1, xp=0, attack_dice=(1,4),
                                         death_function=player_death)
-            player = Player(0, 0, '@', name, libtcod.white, blocks=True, fighter=fighter_component)
+            player = Object(0, 0, '@', name, libtcod.white, blocks=True, fighter=fighter_component)
             
             equipment_component = Weapon(slot='hand', power_bonus=1, attack_dice=(1,6))
             obj = Object(0, 0, '-', 'butter knife', libtcod.sky, equipment=equipment_component)
@@ -2020,10 +2026,10 @@ def new_game():
         elif choice == 3:
             fighter_component = Fighter(hp=100, defense=1, power=1, xp=0, attack_dice=(1,4),
                                         death_function=player_death)
-            player = Player(0, 0, '@', name, libtcod.white, blocks=True, fighter=fighter_component)
+            player = Object(0, 0, '@', name, libtcod.white, blocks=True, fighter=fighter_component)
             
             equipment_component = Weapon(slot='hand', power_bonus=1, attack_dice=(1,8))
-            obj = Object(0, 0, '/', 'claymore', libtcod.sky, equipment=equipment_component)
+            obj = Object(0, 0, '-', 'claymore', libtcod.sky, equipment=equipment_component)
             inventory.append(obj)
             equipment_component.equip()
             obj.always_visible = True
@@ -2033,26 +2039,17 @@ def new_game():
         elif choice == 4:
             fighter_component = Fighter(hp=100, defense=1, power=1, xp=0, attack_dice=(1,6),
                                         death_function=player_death)
-            player = Player(0, 0, '@', name, libtcod.white, blocks=True, fighter=fighter_component)
+            player = Object(0, 0, '@', name, libtcod.white, blocks=True, fighter=fighter_component)
 
             player.spec = 'Street Fighter'
 
-        elif choice == 5:
+        elif choice == 4:
             fighter_component = Fighter(hp=100, defense=1, power=1, xp=0, attack_dice=(1,6),
                                         death_function=player_death)
-            player = Player(0, 0, '@', name, libtcod.white, blocks=True, fighter=fighter_component)
-
             equipment_component = Weapon(slot='hand', attack_dice=(1,4))
-            obj = Object(0, 0, '+', 'cross', libtcod.sky, equipment=equipment_component)
-            equipment_component.equip()
-            inventory.append(obj)
-            obj.always_visible = True
-
-            item_component = Tome(cast_heal_lesser)
-            item = Object(0, 0, '=', 'tome of lesser healing', libtcod.blue, item=item_component)
-            inventory.append(obj)
-
-            player.spec = "Healer"
+            obj = Object(0, 0, '-', 'cross', libtcod.sky, equipment=equipment_component)
+            player = Object(0, 0, '@', name, libtcod.white, blocks=True, fighter=fighter_component)
+            player.spellbook.append(spells['heal lesser'])
 
     player.level = 1
     player.inv = inventory

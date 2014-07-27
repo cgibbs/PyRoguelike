@@ -208,8 +208,7 @@ class Object:
             libtcod.console_put_char(con, self.x, self.y, self.char, libtcod.BKGND_NONE)"""
 
     def clear(self):
-        libtcod.console_put_char(con, self.x-camera.x, self.y-camera.y, ' ', 
-            libtcod.BKGND_NONE)
+        libtcod.console_put_char(con, self.x-camera.x, self.y-camera.y, ' ', libtcod.BKGND_NONE)
 
     def send_to_back(self):
         # sets drawing order such that this object is drawn underneath other stuff
@@ -222,8 +221,7 @@ class Object:
         tile = map[self.x][self.y]
         for mod in tile.mod_set:
             if mod not in self.mod_set:
-                pass # TODO: handle damages, maybe as a list 
-                     #(for multiple damage types on floors)
+                pass # TODO: handle damages, maybe as a list (for multiple damage types on floors)
 
     @property
     def full_name(self):
@@ -296,7 +294,6 @@ class Camera:
             self.y = MAP_HEIGHT - CAMERA_HEIGHT
 
     def move_to(self, x, y):
-        # moves camera to center on (x, y)
         self.x = x - CAMERA_WIDTH/2
         self.y = y - CAMERA_HEIGHT/2
         self.fix_camera()
@@ -603,7 +600,7 @@ class Weapon(Equipment):
 
 
 def handle_keys():
-    global fov_recompute, mouse, msg_index, game_msgs
+    global fov_recompute, keys, mouse, msg_index, game_msgs
     
     if key.vk == libtcod.KEY_ENTER and key.lalt:
         libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())    
@@ -1281,18 +1278,16 @@ def create_monster(x, y):
         m = libtcod.random_get_int(0, 1, 3)
         n = random.choice(nouns)
         if m == 1:
-            monster.fighter.attack_dice = (monster.fighter.attack_dice[0]+1, monster.fighter.attack_dice[1]) 
-            #fast monsters get another die
+            monster.fighter.attack_dice = (monster.fighter.attack_dice[0]+1, monster.fighter.attack_dice[1]) #fast monsters get another die
             pre = random.choice(prefixes['fast'])
         elif m == 2:
-            monster.fighter.attack_dice = (monster.fighter.attack_dice[0], monster.fighter.attack_dice[1]+2) 
-            #strong monsters get a bigger die
+            monster.fighter.attack_dice = (monster.fighter.attack_dice[0], monster.fighter.attack_dice[1]+2) #strong monsters get a bigger die
             pre = random.choice(prefixes['strong'])
         elif m == 3:
-            monster.fighter.hp += 20 
-            #hp monsters get more hp
+            monster.fighter.hp += 20 #hp monsters get more hp
             pre = random.choice(prefixes['hp'])
         monster.name = pre + n + ' the ' + monster.name
+        print monster.name
         monster.color = libtcod.grey
         monster.fighter.xp += monster.fighter.xp/2
     return monster
