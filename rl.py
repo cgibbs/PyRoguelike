@@ -151,7 +151,7 @@ class Object:
             self.item.owner = self
 
         self.equipment = equipment
-        if self.equipment: # let the equipment component know what owns it
+        if self.equipment: # let the equipment component know who owns it
             self.equipment.owner = self
             self.item = Item() # a piece of equipment is always an Item (can be picked up and used)
             self.item.owner = self
@@ -554,7 +554,7 @@ class Equipment:
         self.power_bonus = power_bonus
         self.defense_bonus = defense_bonus
         self.max_hp_bonus = max_hp_bonus
-        self.slot = slot # tee hee! (don't be a baby, it's ironic.)
+        self.slot = slot 
         self.is_equipped = False
 
     def toggle_equip(self):
@@ -1644,7 +1644,7 @@ def carve():
                 closest_enemy = object
                 closest_dist = dist
     if closest_enemy is None:
-        message('You must be standing on a corpse to carve (put on some old boots first).')
+        message('You must be standing on a corpse to carve.')
     else:
         try:
             closest_enemy.full_name.index('Skele')
